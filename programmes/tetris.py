@@ -1,8 +1,20 @@
+from copy import copy
 import random
 from glitch_console_types import Config
 from utils import get_random_char
+from dataclasses import dataclass
 
-tetris_pieces = []
+@dataclass
+class TetrisPiece:
+    piece: list
+    position: tuple[int, int, int]
+    scale: int
+    rotation: int = 0
+    is_dropping: bool = False
+    frames_since_last_movement: int = 0
+
+tetris_pieces: list[TetrisPiece] = []
+
 frames_per_movement = 5
 probability_of_tetris_piece_rotating = 0.1
 probability_of_tetris_piece_moving_sideways = 0.3
@@ -15,46 +27,52 @@ def print_tetris(frame, config: Config):
     height = len(frame)
 
     # Update pieces
-    for i in range(len(tetris_pieces)):
-        piece, (x, y), rotation, is_dropping, frames_since_last_movement, character, scale = tetris_pieces[i]
+    for tetris_piece in tetris_pieces:
         if random.random() < probability_of_tetris_piece_rotating:
-            rotation = (rotation + random.randint(-1, 1)) % 4
+            tetris_piece.rotation = (tetris_piece.rotation + random.randint(-1, 1)) % 4
+
+        x = tetris_piece.position[0]
+        y = tetris_piece.position[1]
+        z = tetris_piece.position[2]
 
         if random.random() < probability_of_tetris_piece_moving_sideways:
-            x += random.choice([-1, 1]) * scale
+            x += random.choice([-1, 1]) * tetris_piece.scale
         
         if random.random() < probability_of_tetris_piece_dropping:
-            is_dropping = True
+            tetris_piece.is_dropping = True
 
-        if is_dropping:
-            y += 2 * scale
+        if tetris_piece.is_dropping:
+            y += 2 * tetris_piece.scale
         else:
-            frames_since_last_movement += 1
-            if frames_since_last_movement == frames_per_movement:
-                y += 1 * scale
-                frames_since_last_movement = 0
-    
-        tetris_pieces[i] = (piece, (x, y), rotation, is_dropping, frames_since_last_movement, character, scale)
+            tetris_piece.frames_since_last_movement += 1
+            if tetris_piece.frames_since_last_movement == frames_per_movement:
+                y += 1 * tetris_piece.scale
+                tetris_piece.frames_since_last_movement = 0
+        
+        tetris_piece.position = (x, y, z)
 
     # Remove pieces that have reached the bottom of the screen
-    tetris_pieces[:] = [fp for fp in tetris_pieces if fp[1][1] < height]
+    tetris_pieces[:] = [fp for fp in tetris_pieces if fp.position[1] < height]
 
-    # Occasionally add a new falling piece
+    # Occasionally add a new piece
     if random.random() < config.tetris_new_prob:
-        new_piece = get_random_piece()  # Use a wider range of tetris pieces
-        new_x = random.randint(0, width - 1)
-        tetris_pieces.append((new_piece, (new_x, 0), 0, False, 0, get_random_char(), random.choice(config.tetris_scale_prob_weights)))
+        tetris_pieces.append(
+            TetrisPiece(
+                piece=get_random_piece(),
+                position=(random.randint(0, width - 1), 0, random.randint(0, width - 1)),
+                scale=random.choice(config.tetris_scale_prob_weights)
+            )
+        )
 
 
-    # Add falling pieces to the frame
-    for piece, (x, y), rotation, is_dropping, frames_since_last_movement, character, scale in tetris_pieces:
-        if 0 <= y < height and 0 <= x < width:
-            draw_piece(frame, piece, x, y, rotation, config.using_colour, get_random_char(), scale)
+    # Draw pieces on the frame
+    for tetris_piece in tetris_pieces:
+        if 0 <= tetris_piece.position[1] < height and 0 <= tetris_piece.position[0] < width:
+            draw_piece(frame, tetris_piece, config.using_colour, get_random_char())
 
 
 
 def get_random_piece():
-    # Return a random tetris piece
     pieces = [
         [
             "  X ",
@@ -102,10 +120,15 @@ def get_random_piece():
     return random.choice(pieces)
 
 
-def draw_piece(frame, piece, x, y, rotation, use_colors, character, scale=1):
+def draw_piece(frame, tetris_piece: TetrisPiece, use_colors, character):
     # Rotate the piece
-    for _ in range(rotation):
+    piece = copy(tetris_piece.piece)
+    for _ in range(tetris_piece.rotation):
         piece = rotate_piece(piece)
+
+    x = tetris_piece.position[0]
+    y = tetris_piece.position[1]
+    scale = tetris_piece.scale
 
     # Draw the tetris piece on the frame
     for i in range(len(piece)):
@@ -121,5 +144,4 @@ def draw_piece(frame, piece, x, y, rotation, use_colors, character, scale=1):
 
 
 def rotate_piece(piece):
-    # Rotate the tetris piece
     return list(map("".join, zip(*reversed(piece))))

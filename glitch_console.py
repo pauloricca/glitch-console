@@ -37,14 +37,8 @@ stages: list[Config] = [
     ),
     Config(
         transition_time=8,
-        duration=15,
-        glitch_chars_print_at_bottom=True,
-        glitch_chars_command_prob=0.01,
-        glitch_chars_question_prob=0.005,
-        colours_turning_off_prob=0.5,
-        colours_turning_on_prob=0.005,
-        glitch_chars_prob_mutating_new_prob=0.01,
-        tetris_new_prob=0.01,
+        duration=300,
+        tetris_new_prob=0.1,
         tetris_scale_prob_weights=[1, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 4, 5],
     ),
     Config(
