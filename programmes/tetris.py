@@ -1,5 +1,5 @@
 import random
-from mumbo_types import Config
+from glitch_console_types import Config
 from utils import get_random_char
 
 tetris_pieces = []
@@ -8,7 +8,7 @@ probability_of_tetris_piece_rotating = 0.1
 probability_of_tetris_piece_moving_sideways = 0.3
 probability_of_tetris_piece_dropping = 0.01
 
-def print_tetris(frame, current_config: Config):
+def print_tetris(frame, config: Config):
     global tetris_pieces, frames_per_movement, probability_of_tetris_piece_rotating, probability_of_tetris_piece_dropping, probability_of_tetris_piece_moving_sideways
 
     width = len(frame[0])
@@ -40,16 +40,16 @@ def print_tetris(frame, current_config: Config):
     tetris_pieces[:] = [fp for fp in tetris_pieces if fp[1][1] < height]
 
     # Occasionally add a new falling piece
-    if random.random() < current_config.tetris_new_prob:
+    if random.random() < config.tetris_new_prob:
         new_piece = get_random_piece()  # Use a wider range of tetris pieces
         new_x = random.randint(0, width - 1)
-        tetris_pieces.append((new_piece, (new_x, 0), 0, False, 0, get_random_char(), random.choice(current_config.tetris_scale_prob_weights)))
+        tetris_pieces.append((new_piece, (new_x, 0), 0, False, 0, get_random_char(), random.choice(config.tetris_scale_prob_weights)))
 
 
     # Add falling pieces to the frame
     for piece, (x, y), rotation, is_dropping, frames_since_last_movement, character, scale in tetris_pieces:
         if 0 <= y < height and 0 <= x < width:
-            draw_piece(frame, piece, x, y, rotation, current_config.using_colour, get_random_char(), scale)
+            draw_piece(frame, piece, x, y, rotation, config.using_colour, get_random_char(), scale)
 
 
 

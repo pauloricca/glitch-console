@@ -3,7 +3,7 @@ import os
 import random
 import time
 
-from mumbo_types import Config
+from glitch_console_types import Config
 from log import log
 
 from programmes.fake_error import print_fake_error
@@ -30,7 +30,7 @@ stages: list[Config] = [
         glitch_chars_print_at_bottom=True,
         glitch_chars_command_prob=0.01,
         glitch_chars_question_prob=0.005,
-        probability_of_turning_off_colours=0.5,
+        colours_turning_off_prob=0.5,
         colours_turning_on_prob=0.005,
         glitch_chars_prob_mutating_new_prob=0.01,
         tetris_new_prob=0.01,
@@ -41,7 +41,7 @@ stages: list[Config] = [
         glitch_chars_print_at_bottom=True,
         glitch_chars_command_prob=0.01,
         glitch_chars_question_prob=0.005,
-        probability_of_turning_off_colours=0.5,
+        colours_turning_off_prob=0.5,
         colours_turning_on_prob=0.005,
         glitch_chars_prob_mutating_new_prob=0.01,
         tetris_new_prob=0.01,
@@ -62,7 +62,7 @@ stages: list[Config] = [
         glitch_chars_char_prob=0.02,
         glitch_chars_prob_mutating_new_prob=0.01,
         glitch_chars_prob_mutating_existing_prob=0.001,
-        probability_of_turning_off_colours=0.1,
+        colours_turning_off_prob=0.1,
         colours_turning_on_prob=0.01,
         three_d_shapes_prob=1.0,
         three_d_shapes_turning_off_prob=0.0,
@@ -118,7 +118,7 @@ def main():
             has_finished_transition = True
 
         if random.random() < (
-            current_config.probability_of_turning_off_colours
+            current_config.colours_turning_off_prob
             if current_config.using_colour
             else current_config.colours_turning_on_prob
         ):

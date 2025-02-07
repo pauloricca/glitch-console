@@ -1,6 +1,6 @@
 import random
 
-from mumbo_types import Config
+from glitch_console_types import Config
 from programmes.glitch_characters import get_fake_command
 from utils import get_random_char, mutate
 
@@ -64,13 +64,13 @@ def get_fake_error(probability_of_reading_file=0.1, probability_of_mutating_char
     return error
 
 
-def print_fake_error(frame, current_config: Config, is_blinking_on):
+def print_fake_error(frame, config: Config, is_blinking_on):
 	global fake_error, fake_error_x, fake_error_y, fake_error_frames_remaining
 
 	width = len(frame[0])
 	height = len(frame)
 	
-	if random.random() < current_config.error_prob and fake_error_frames_remaining <= 0:
+	if random.random() < config.error_prob and fake_error_frames_remaining <= 0:
 			fake_error = get_fake_error()
 			fake_error_y = random.randint(0, max(0, height - len(fake_error)))
 			fake_error_x = random.randint(

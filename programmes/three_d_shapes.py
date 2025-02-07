@@ -1,7 +1,7 @@
 import math
 import random
 
-from mumbo_types import Config
+from glitch_console_types import Config
 from utils import get_random_char
 
 X_SCALE = 0.5

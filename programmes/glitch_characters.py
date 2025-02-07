@@ -1,6 +1,6 @@
 import random
 import time
-from mumbo_types import Config
+from glitch_console_types import Config
 from utils import get_random_char, mutate
 
 
@@ -132,15 +132,15 @@ def get_fake_command():
 def get_question():
     return random.choice(questions)
 
-def add_glitch(glitch, glitch_type, width, height, current_config: Config):
+def add_glitch(glitch, glitch_type, width, height, config: Config):
     global glitch_characters
 
     if glitch_type != "counter":
         glitch = mutate(
-            glitch, current_config.glitch_chars_prob_mutating_new_prob
+            glitch, config.glitch_chars_prob_mutating_new_prob
         )
 
-    if current_config.glitch_chars_print_at_bottom:
+    if config.glitch_chars_print_at_bottom:
         new_y = height - 1
         new_x = 0
         glitch_characters = [(glitch, (new_x, new_y - 1), birth_time, glitch_type)

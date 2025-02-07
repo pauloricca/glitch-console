@@ -1,14 +1,14 @@
 import time
-from mumbo_types import Config
+from glitch_console_types import Config
 import math
 
 IS_WARP_MODE = True
 
 
-def print_waves(frame: list[str], current_config: Config):
+def print_waves(frame: list[str], config: Config):
     global IS_WARP_MODE
 
-    if current_config.waves_amplitude == 0 or current_config.waves_period == 0:
+    if config.waves_amplitude == 0 or config.waves_period == 0:
         return frame
 
     width = len(frame[0])
@@ -16,7 +16,7 @@ def print_waves(frame: list[str], current_config: Config):
 
     t = time.time()
     offsets = [
-        int(current_config.waves_amplitude * math.sin((x + current_config.waves_speed * t) / current_config.waves_period))
+        int(config.waves_amplitude * math.sin((x + config.waves_speed * t) / config.waves_period))
         for x in range(height if IS_WARP_MODE else width)
         ]
 
