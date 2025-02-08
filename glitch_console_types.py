@@ -31,6 +31,8 @@ class Config:
     falling_chars_new_prob: float = 0
     tetris_new_prob: float = 0
     tetris_scale_prob_weights: List[float] = field(default_factory=default_puzzle_piece_scale_probability_weights)
+    tetris_max_depth: float = 0
+    tetris_depth_movement: float = 0
     waves_period: float = 0
     waves_amplitude: float = 0
     waves_speed: float = 0

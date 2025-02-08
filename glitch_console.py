@@ -14,7 +14,7 @@ from programmes.falling_characters import print_falling_characters
 from programmes.glitch_characters import print_glitch_characters
 from programmes.waves import print_waves
 
-START_STAGE = 2
+START_STAGE = 3
 FPS = 30
 
 stages: list[Config] = [
@@ -26,20 +26,26 @@ stages: list[Config] = [
     ),
     Config(
         transition_time=8,
-        duration=15,
+        duration=8,
         glitch_chars_print_at_bottom=True,
         glitch_chars_command_prob=0.01,
         glitch_chars_question_prob=0.005,
         colours_turning_off_prob=0.5,
         colours_turning_on_prob=0.005,
         glitch_chars_prob_mutating_new_prob=0.01,
-        tetris_new_prob=0.01,
+        tetris_new_prob=0.03,
     ),
     Config(
-        transition_time=8,
+        transition_time=5,
+        duration=10,
+        tetris_new_prob=0.2,
+    ),
+    Config(
+        transition_time=15,
         duration=300,
-        tetris_new_prob=0.1,
-        tetris_scale_prob_weights=[1, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 4, 5],
+        tetris_new_prob=2,
+        tetris_depth_movement=5,
+        tetris_max_depth=500,
     ),
     Config(
         transition_time=15,
@@ -146,8 +152,8 @@ def main():
             # print("\033[1A", end="\x1b[2K")
 
         # Render
-        for line in frame:
-            print(line)
+        output = '\n'.join(frame)
+        print(output)
 
         number_of_lines_in_last_frame = len(frame)
 

@@ -6,7 +6,7 @@ logger.setLevel(logging.INFO)
 
 # Create a file handler and set the log file path
 log_file = 'log.log'
-file_handler = logging.FileHandler(log_file)
+file_handler = logging.FileHandler(log_file, mode='w')
 
 # Create a formatter and set the format of the log messages
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
