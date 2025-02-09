@@ -62,65 +62,72 @@ pieces2x2 = [
     ],
 ]
 
+
+FRAMES_PER_MOVEMENT = 5
+FALLING_SPEED = 3
+FALLING_SPEED_BACKWARDS = -1
+PERSPECTIVE = 500
+PROBABILITY_TO_FOLLOW_DIRECTION_BIAS = 0.8
+PROBABILITY_OF_START_MOVING_FORWARD = 0.02
+PROBABILITY_OF_START_MOVING_BACKWARDS = 0.01
+PROBABILITY_OF_ROTATION = 0.05
+PROBABILITY_OF_MOVING_SIDEWAYS = 0.3
+PROBABILITY_OF_DROPPING = 0.01
+USE_RANDOM_CHARACTERS = False
+
+
 @dataclass
 class TetrisPiece:
     piece: list
     position: tuple[int, int, int]
+    character: str
     direction_bias: int = 0
     scale: int = 1
     rotation: int = 0
     is_dropping: bool = False
     frames_since_last_movement: int = 0
 
+
 tetris_pieces: list[TetrisPiece] = []
+is_movingbackwards = False
 
-FRAMES_PER_MOVEMENT = 5
-FALLING_SPEED = 2
-PERSPECTIVE = 500
-PROBABILITY_TO_FOLLOW_DIRECTION_BIAS = 0.8
-PROBABILITY_OF_CHANGING_DEPTH_MOVEMENT_DIRECTION = 0.01
-probability_of_tetris_piece_rotating = 0.1
-probability_of_tetris_piece_moving_sideways = 0.3
-probability_of_tetris_piece_dropping = 0.01
-
-depth_movement_direction = -1
 
 def print_tetris(frame, config: Config):
-    global tetris_pieces, FRAMES_PER_MOVEMENT, FALLING_SPEED, probability_of_tetris_piece_rotating, probability_of_tetris_piece_dropping, probability_of_tetris_piece_moving_sideways, depth_movement_direction, pieces4x4
+    global tetris_pieces, FRAMES_PER_MOVEMENT, FALLING_SPEED, FALLING_SPEED_BACKWARDS, PROBABILITY_TO_FOLLOW_DIRECTION_BIAS, PROBABILITY_OF_START_MOVING_FORWARD, PROBABILITY_OF_START_MOVING_BACKWARDS, PROBABILITY_OF_ROTATION, PROBABILITY_OF_DROPPING, PROBABILITY_OF_MOVING_SIDEWAYS, is_movingbackwards, pieces4x4
 
     width = len(frame[0])
     height = len(frame)
 
-    if random.random() < PROBABILITY_OF_CHANGING_DEPTH_MOVEMENT_DIRECTION:
-        depth_movement_direction = -depth_movement_direction
+    if config.tetris_depth_movement == 0:
+        is_movingbackwards = False
+    elif random.random() < (PROBABILITY_OF_START_MOVING_FORWARD if is_movingbackwards else PROBABILITY_OF_START_MOVING_BACKWARDS):
+        is_movingbackwards = not is_movingbackwards
 
     # Update pieces
     for tetris_piece in tetris_pieces:
-        if random.random() < probability_of_tetris_piece_rotating:
+        if random.random() < PROBABILITY_OF_ROTATION and not is_movingbackwards:
             tetris_piece.rotation = (tetris_piece.rotation + random.randint(-1, 1)) % 4
 
-        x = tetris_piece.position[0]
-        y = tetris_piece.position[1]
-        z = tetris_piece.position[2]
+        x, y, z = tetris_piece.position
 
-        if random.random() < probability_of_tetris_piece_moving_sideways:
+        if random.random() < PROBABILITY_OF_MOVING_SIDEWAYS and not is_movingbackwards:
             if random.random() < PROBABILITY_TO_FOLLOW_DIRECTION_BIAS:
                 x += tetris_piece.direction_bias
             else:
                 x += random.choice([-1, 1])
         
-        if random.random() < probability_of_tetris_piece_dropping:
+        if random.random() < PROBABILITY_OF_DROPPING:
             tetris_piece.is_dropping = True
 
         if tetris_piece.is_dropping:
-            y += FALLING_SPEED * (depth_movement_direction if config.tetris_depth_movement > 0 else 1)
+            y += FALLING_SPEED if not is_movingbackwards else FALLING_SPEED_BACKWARDS
         else:
             tetris_piece.frames_since_last_movement += 1
             if tetris_piece.frames_since_last_movement == FRAMES_PER_MOVEMENT:
-                y += 1 * (depth_movement_direction if config.tetris_depth_movement > 0 else 1)
+                y += 1 if not is_movingbackwards else 0
                 tetris_piece.frames_since_last_movement = 0
         
-        z -= depth_movement_direction * config.tetris_depth_movement
+        z -= config.tetris_depth_movement * (1 if not is_movingbackwards else -1)
 
         tetris_piece.position = (x, y, z)
 
@@ -128,31 +135,36 @@ def print_tetris(frame, config: Config):
     tetris_pieces[:] = [fp for fp in tetris_pieces if fp.position[1] < height]
 
     # Occasionally add a new piece
-    for _ in range(max(int(config.tetris_new_prob), 1)):
-        if random.random() < config.tetris_new_prob:
-            try:
-                tetris_pieces.append(
-                    TetrisPiece(
-                        piece=random.randint(0, len(pieces4x4) - 1),
-                        position=(random.randint(0, width - 1), random.randint(0, height - 1), random.randint(-int(config.tetris_max_depth), int(config.tetris_max_depth)) if config.tetris_max_depth > 1 else 0),
-                        scale=random.choice(config.tetris_scale_prob_weights),
-                        direction_bias=random.choice([-1, 1])
+    if not is_movingbackwards:
+        for _ in range(max(int(config.tetris_new_prob), 1)):
+            if random.random() < config.tetris_new_prob:
+                try:
+                    tetris_pieces.append(
+                        TetrisPiece(
+                            piece=random.randint(0, len(pieces4x4) - 1),
+                            position=(
+                                random.randint(0, width - 1),
+                                random.randint(0, height - 1),
+                                random.randint(-int(config.tetris_max_depth), int(config.tetris_max_depth)) if config.tetris_max_depth > 1 else 0),
+                            scale=random.choice(config.tetris_scale_prob_weights),
+                            direction_bias=random.choice([-1, 1]),
+                            character=get_random_char()
+                        )
                     )
-                )
-            except Exception as e:
-                import pdb; pdb.set_trace()
-            tetris_pieces.sort(key=lambda piece: -piece.position[2])
+                except Exception as e:
+                    import pdb; pdb.set_trace()
+                tetris_pieces.sort(key=lambda piece: -piece.position[2])
 
 
     # Draw pieces on the frame
     for tetris_piece in tetris_pieces:
         if 0 <= tetris_piece.position[1] < height and 0 <= tetris_piece.position[0] < width:
-            draw_piece(frame, tetris_piece, config.using_colour, get_random_char(), width, height)
+            draw_piece(frame, tetris_piece, config.using_colour, width, height)
 
 
 
-def draw_piece(frame, tetris_piece: TetrisPiece, use_colors, character, width, height):
-    global PERSPECTIVE, pieces4x4, pieces2x2
+def draw_piece(frame, tetris_piece: TetrisPiece, use_colors, width, height):
+    global PERSPECTIVE, pieces4x4, pieces2x2, USE_RANDOM_CHARACTERS
 
     x = tetris_piece.position[0]
     y = tetris_piece.position[1]
@@ -193,6 +205,8 @@ def draw_piece(frame, tetris_piece: TetrisPiece, use_colors, character, width, h
             piece = rotate_piece(piece)
     
     log(piece, scale, x, y)
+
+    character = get_random_char() if USE_RANDOM_CHARACTERS else tetris_piece.character
 
     character = "\033[1;31m" + character + "\033[0m" if use_colors else character
 

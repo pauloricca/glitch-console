@@ -15,7 +15,7 @@ from programmes.glitch_characters import print_glitch_characters
 from programmes.waves import print_waves
 
 START_STAGE = 3
-FPS = 30
+FPS = 20
 
 stages: list[Config] = [
     Config(
@@ -42,10 +42,20 @@ stages: list[Config] = [
     ),
     Config(
         transition_time=15,
-        duration=300,
+        duration=200,
+        tetris_new_prob=2,
+        tetris_depth_movement=3,
+        tetris_max_depth=500,
+    ),
+    Config(
+        transition_time=10,
+        duration=10,
         tetris_new_prob=2,
         tetris_depth_movement=5,
         tetris_max_depth=500,
+        waves_period=5,
+        waves_amplitude=20,
+        waves_speed=4,
     ),
     Config(
         transition_time=15,
