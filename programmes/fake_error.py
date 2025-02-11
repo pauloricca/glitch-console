@@ -2,7 +2,7 @@ import random
 
 from glitch_console_types import Config
 from programmes.glitch_characters import get_fake_command
-from utils import get_random_char, mutate
+from utils import draw_into_frame, get_random_char, mutate
 
 
 fake_error = []
@@ -10,7 +10,8 @@ fake_error_x = 0
 fake_error_y = 0
 fake_error_frames_remaining = 0
 
-def get_fake_error(probability_of_reading_file=0.1, probability_of_mutating_characters=0):
+
+def get_fake_error(probability_of_reading_file=0, probability_of_mutating_characters=0):
     error_types = [
         [
             "Traceback (most recent call last):",
@@ -20,7 +21,7 @@ def get_fake_error(probability_of_reading_file=0.1, probability_of_mutating_char
         ],
         [
             'Exception in thread "main" java.lang.NullPointerException',
-            f"\tat {random.choice(['com.example.Main.main', 'com.example.Helper.process', 'com.example.Service.run'])}({random.choice(['Main.java', 'Helper.java', 'Service.java'])}:{random.randint(10, 200)})",
+            f"   at {random.choice(['com.example.Main.main', 'com.example.Helper.process', 'com.example.Service.run'])}({random.choice(['Main.java', 'Helper.java', 'Service.java'])}:{random.randint(10, 200)})",
         ],
         [
             "Unhandled Exception: System.NullReferenceException",
@@ -54,7 +55,7 @@ def get_fake_error(probability_of_reading_file=0.1, probability_of_mutating_char
             lines = f.readlines()
             start_line = random.randint(0, len(lines) - 6)
             num_lines = random.randint(3, 6)
-            error = lines[start_line : start_line + num_lines]
+            error = lines[start_line: start_line + num_lines]
             error = [line.strip() for line in error]
     else:
         error = random.choice(error_types)
@@ -69,24 +70,20 @@ def print_fake_error(frame, config: Config, is_blinking_on):
 
 	width = len(frame[0])
 	height = len(frame)
-	
+
 	if random.random() < config.error_prob and fake_error_frames_remaining <= 0:
-			fake_error = get_fake_error()
-			fake_error_y = random.randint(0, max(0, height - len(fake_error)))
-			fake_error_x = random.randint(
-					0, max(0, width - max(len(line) for line in fake_error))
-			)
-			fake_error_frames_remaining = random.randint(5, 50)
+		fake_error = get_fake_error()
+		fake_error_y = random.randint(0, max(0, height - len(fake_error)))
+		fake_error_x = random.randint(
+                    0, max(0, width - max(len(line)
+                                          for line in fake_error))
+                )
+		fake_error_frames_remaining = random.randint(5, 50)
 
 	if fake_error_frames_remaining > 0:
-			if random.random() < 0.1:
-					fake_error_x = max(0, min(width - 1, fake_error_x + random.randint(-1, 1)))
-					fake_error_y = max(0, min(height - 1, fake_error_y + random.randint(-1, 1)))
-			for i, line in enumerate(fake_error):
-					if is_blinking_on and fake_error_y + i < height:
-							frame[fake_error_y + i] = (
-									frame[fake_error_y + i][:fake_error_x]
-									+ line
-									+ frame[fake_error_y + i][fake_error_x + len(line) :]
-							)
-					fake_error_frames_remaining -= 1
+		if random.random() < 0.1:
+			fake_error_x = max(0, min(width - 1, fake_error_x + random.randint(-1, 1)))
+			fake_error_y = max(0, min(height - 1, fake_error_y + random.randint(-1, 1)))
+		if is_blinking_on:
+			draw_into_frame(frame, fake_error, fake_error_x, fake_error_y)
+		fake_error_frames_remaining -= 1

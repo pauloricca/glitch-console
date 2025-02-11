@@ -1,12 +1,13 @@
 import random
 import time
 from glitch_console_types import Config
-from utils import get_random_char, mutate
+from utils import draw_into_frame, get_random_char, mutate
 
 
 glitch_characters = []
 has_finished_typing_last_glitch = True
 
+TERMINAL_PROMPT = "root@mainfrm:~$ "
 
 fake_commands = [
     "ls -la",
@@ -154,12 +155,13 @@ def add_glitch(glitch, glitch_type, width, height, config: Config):
         (glitch, (new_x, new_y), time.time_ns(), glitch_type))
 
 
-def print_glitch_characters(frame, config: Config):
-    global glitch_characters, has_finished_typing_last_glitch
+def print_glitch_characters(frame, config: Config, is_blinking_on: bool):
+    global glitch_characters, has_finished_typing_last_glitch, TERMINAL_PROMPT
 
     width = len(frame[0])
     height = len(frame)
 
+    # Add new glitch characters
     if not config.glitch_chars_print_at_bottom or has_finished_typing_last_glitch:
         if random.random() < config.glitch_chars_line_prob:
             add_glitch(get_random_char() * random.randint(20, 80), "line", width, height, config)
@@ -181,8 +183,8 @@ def print_glitch_characters(frame, config: Config):
     glitch_characters[:] = [
         gc for gc in glitch_characters if random.random() < 0.98 or (gc[1][0] == 0 and config.glitch_chars_print_at_bottom)]
 
+    # Randomly shift glitch characters coordinates
     if not config.glitch_chars_print_at_bottom:
-         # Randomly shift glitch characters coordinates
         for i in range(len(glitch_characters)):
             glitch, (x, y), birth_time, glitch_type = glitch_characters[i]
             shift_x = random.randint(-1, 1) if random.random() < 0.1 else 0
@@ -201,7 +203,12 @@ def print_glitch_characters(frame, config: Config):
             )
             glitch_characters[i] = (glitch, (x, y), birth_time, glitch_type)
 
-    # Add glitch characters
+    # Make sure to always show a prompt at the bottom
+    if config.glitch_chars_print_at_bottom and not any(gc[1] == (0, height - 1) for gc in glitch_characters):
+        prompt = TERMINAL_PROMPT + ("█" if is_blinking_on else "")
+        draw_into_frame(frame, prompt, 0, height - 1)
+
+    # Print glitch characters
     for glitch, (x, y), birth_time, glitch_type in glitch_characters:
         glitch_str = (
             glitch
@@ -218,9 +225,9 @@ def print_glitch_characters(frame, config: Config):
             has_finished_typing_last_glitch = len(glitch) == max_length
             
             if x == 0:
-                    glitch_str = "paulo@mainfrm:/$ " + glitch_str
+                    glitch_str = TERMINAL_PROMPT + glitch_str
 
-            if int(elapsed_time_ms / 50) % 2 == 0 and (not config.glitch_chars_print_at_bottom or y == height - 1):
+            if is_blinking_on and (not config.glitch_chars_print_at_bottom or y == height - 1):
                 glitch_str += "█"
 
             if (
@@ -232,4 +239,4 @@ def print_glitch_characters(frame, config: Config):
             # Ensure the glitch string does not overflow the line length
             max_length = width - x
             glitch_str = glitch_str[:max_length]
-            frame[y] = frame[y][:x] + glitch_str + frame[y][x + len(glitch_str):]
+            draw_into_frame(frame, glitch_str, x, y)

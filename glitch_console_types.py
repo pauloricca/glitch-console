@@ -28,14 +28,26 @@ class Config:
     three_d_shapes_change_shape_prob: float = 0
     three_d_shapes_turning_off_prob: float = 0
     three_d_shapes_turning_on_prob: float = 0
+    connections_prob: float = 0
+    connections_change_shape_prob: float = 0
+    connections_turning_off_prob: float = 0
+    connections_turning_on_prob: float = 0
     falling_chars_new_prob: float = 0
     tetris_new_prob: float = 0
     tetris_scale_prob_weights: List[float] = field(default_factory=default_puzzle_piece_scale_probability_weights)
     tetris_max_depth: float = 0
     tetris_depth_movement: float = 0
+    tetris_start_moving_forward_prob: float = 0
+    tetris_start_moving_backwards_prob: float = 0
+    tetris_move_sideways_prob: float = 0
+    tetris_drop_prob: float = 0
+    tetris_random_chars: bool = False
     waves_period: float = 0
     waves_amplitude: float = 0
     waves_speed: float = 0
+    water_period: float = 0
+    water_amplitude: float = 0
+    water_speed: float = 0
 
 
 

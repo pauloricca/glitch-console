@@ -1,6 +1,6 @@
 import random
 from glitch_console_types import Config
-from utils import get_random_char
+from utils import draw_into_frame, get_random_char
 
 falling_characters = []
 
@@ -33,10 +33,10 @@ def print_falling_characters(frame, config: Config):
                 config.using_colour
                 or random.random() < config.colour_probability
             ):
-                bold_red_char = f"\033[1;31m{char}\033[0m"
+                formatted_char = f"\033[1;31m{char}\033[0m"
             else:
-                bold_red_char = char
-            frame[y] = frame[y][:x] + bold_red_char + frame[y][x + 1 :]
+                formatted_char = char
+            draw_into_frame(frame, formatted_char, x, y)
 
             # Add trails
             for i in range(1, 4):
@@ -46,8 +46,7 @@ def print_falling_characters(frame, config: Config):
                         or random.random() < config.colour_probability
                     ):
                         trail_char = f"\033[1;31m{char}\033[0m"
-                        # trail_char = f"\033[1;3{2};2{i * 3}3{2};2{i * 3}m{get_random_char()}\033[0m"
                     else:
                         trail_char = get_random_char()
-                    frame[y + i] = frame[y + i][:x] + trail_char + frame[y + i][x + 1 :]
+                    draw_into_frame(frame, trail_char, x, y + i)
 

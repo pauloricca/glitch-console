@@ -2,7 +2,7 @@ import math
 import random
 
 from glitch_console_types import Config
-from utils import get_random_char
+from utils import draw_into_frame, get_random_char
 
 
 def print_noisy_characters(frame, elapsed_time, config: Config):
@@ -27,4 +27,4 @@ def print_noisy_characters(frame, elapsed_time, config: Config):
 				line += frame[y][x]
 			else:
 				line += get_random_char()
-		frame[y] = line
+		draw_into_frame(frame, line, 0, y)
