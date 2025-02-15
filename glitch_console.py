@@ -16,8 +16,9 @@ from programmes.glitch_characters import print_glitch_characters
 from programmes.three_d_shapes import print_3d_shapes
 from programmes.water import print_water
 from programmes.waves import print_waves
+from utils import draw_into_frame, get_empty_frame
 
-START_STAGE = 6
+START_STAGE = 0
 FPS = 30
 DO_CLEAR_CONSOLE = False
 DO_WRITE_OVER_PREVIOUS_FRAME = False
@@ -172,27 +173,63 @@ current_config_index = START_STAGE
 current_config = copy(stages[current_config_index])
 previous_config = stages[current_config_index]
 last_transition_time = time.time()
+last_frame_time = time.time()
 has_finished_transition = False
-is_blinking_on = False
 number_of_lines_in_last_frame = 0
 state: State = None
 
 def main():
-    global current_config, is_blinking_on, number_of_lines_in_last_frame, current_config_index, previous_config, last_transition_time, has_finished_transition, FPS, DO_CLEAR_CONSOLE, DO_WRITE_OVER_PREVIOUS_FRAME
+    global current_config, state, number_of_lines_in_last_frame, current_config_index, previous_config, last_transition_time, has_finished_transition, FPS, DO_CLEAR_CONSOLE, DO_WRITE_OVER_PREVIOUS_FRAME, last_frame_time
 
     start_time = time.time()
 
     while True:
         current_time = time.time()
+        time_since_last_frame = current_time - last_frame_time
+        last_frame_time = current_time
+        width = os.get_terminal_size().columns
+        height = os.get_terminal_size().lines
 
         state = State(
-            frame=[" " * os.get_terminal_size().columns for _ in range(os.get_terminal_size().lines)],
+            frame=get_empty_frame(width, height),
             time_since_start=current_time - start_time,
-            time_since_last_frame=current_time - state.time_since_start if state else 0,
-            width=os.get_terminal_size().columns,
-            height=os.get_terminal_size().lines,
-            is_blinking=state.is_blinking if state else False,
+            time_since_last_frame=time_since_last_frame,
+            width=width,
+            height=height,
+            is_blinking=not state.is_blinking if state else False,
+            using_colour=state.using_colour if state else False,
+            global_rotation=state.global_rotation if state else (0, 0, 0),
+            global_rotation_is_rotating_fast=state.global_rotation_is_rotating_fast if state else False,
+            global_rotation_time_since_last_speed_change=state.global_rotation_time_since_last_speed_change if state else 0,
         )
+
+        # Global rotation
+        if state.global_rotation_is_rotating_fast:
+            if state.global_rotation_time_since_last_speed_change > current_config.global_rotation_speed_fast_time:
+                state.global_rotation_is_rotating_fast = False
+                state.global_rotation_time_since_last_speed_change = 0
+        else:
+            if state.global_rotation_time_since_last_speed_change > current_config.global_rotation_speed_slow_time:
+                state.global_rotation_is_rotating_fast = True
+                state.global_rotation_time_since_last_speed_change = 0
+        
+        state.global_rotation_time_since_last_speed_change += time_since_last_frame
+        rotation_speed_multiplier = current_config.global_rotation_speed_fast_ratio if state.global_rotation_is_rotating_fast else 1
+
+        state.global_rotation = (
+            (state.global_rotation[0] + current_config.global_rotation_speed[0] * time_since_last_frame * rotation_speed_multiplier) % 360, 
+            (state.global_rotation[1] + current_config.global_rotation_speed[1] * time_since_last_frame * rotation_speed_multiplier) % 360, 
+            (state.global_rotation[2] + current_config.global_rotation_speed[2] * time_since_last_frame * rotation_speed_multiplier) % 360
+        )
+
+        # Colour
+        if random.random() < (
+            current_config.colours_turning_off_prob
+            if state.using_colour
+            else current_config.colours_turning_on_prob
+        ):
+            state.using_colour = not state.using_colour
+
 
         if current_time - last_transition_time >= current_config.duration:
             previous_config = stages[current_config_index]
@@ -210,41 +247,27 @@ def main():
                     previous_value = getattr(previous_config, attr)
                     interpolated_value = previous_value + (target_value - previous_value) * transition_progress
                     setattr(current_config, attr, interpolated_value)
+    
         elif not has_finished_transition:
             current_config = copy(stages[current_config_index])
             has_finished_transition = True
 
-        if random.random() < (
-            current_config.colours_turning_off_prob
-            if current_config.using_colour
-            else current_config.colours_turning_on_prob
-        ):
-            current_config.using_colour = not current_config.using_colour
-
-        is_blinking_on = not is_blinking_on
-
-        (width, height) = os.get_terminal_size()
-        elapsed_time = current_time - start_time
-
-        # Generate empty frame
-        frame = [" " * width for _ in range(height)]
-
-        print_noisy_characters(frame, elapsed_time, current_config)
-        print_3d_shapes(frame, elapsed_time, current_config)
-        print_connections(frame, elapsed_time, current_config, is_blinking_on)
-        print_tetris(frame, current_config)
-        print_falling_characters(frame, current_config)
-        print_glitch_characters(frame, current_config, is_blinking_on)
-        print_fake_error(frame, current_config, is_blinking_on)
+        print_noisy_characters(state, current_config)
+        print_3d_shapes(state, current_config)
+        print_connections(state, current_config)
+        print_tetris(state, current_config)
+        print_falling_characters(state, current_config)
+        print_glitch_characters(state, current_config)
+        print_fake_error(state, current_config)
 
         # Pad the frame with spaces to make it the same width, and crop it to width
-        # frame = [line[:width].ljust(width) for line in frame]
+        # state.frame = [line[:state.width].ljust(state.width) for line in state.frame]
 
         # limit the frame to the console's width
-        frame = print_waves(frame, current_config)
+        print_waves(state, current_config)
 
         # limit the frame to the console's width
-        frame = print_water(frame, current_config)
+        print_water(state, current_config)
 
         # Clear the console
         if DO_CLEAR_CONSOLE:
@@ -258,11 +281,11 @@ def main():
 
         # Render
         if DO_PRINT_WITHOUT_NEW_LINES:
-            print(''.join(frame), end='', flush=True)
+            print(''.join(state.frame), end='', flush=True)
         else:
-            print('\n'.join(frame))
+            print('\n'.join(state.frame))
 
-        number_of_lines_in_last_frame = len(frame)
+        number_of_lines_in_last_frame = len(state.frame)
 
         time.sleep(1 / FPS)
 

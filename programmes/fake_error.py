@@ -1,6 +1,6 @@
 import random
 
-from glitch_console_types import Config
+from glitch_console_types import Config, State
 from programmes.glitch_characters import get_fake_command
 from utils import draw_into_frame, get_random_char, mutate
 
@@ -65,25 +65,22 @@ def get_fake_error(probability_of_reading_file=0, probability_of_mutating_charac
     return error
 
 
-def print_fake_error(frame, config: Config, is_blinking_on):
+def print_fake_error(state: State, config: Config):
 	global fake_error, fake_error_x, fake_error_y, fake_error_frames_remaining
-
-	width = len(frame[0])
-	height = len(frame)
 
 	if random.random() < config.error_prob and fake_error_frames_remaining <= 0:
 		fake_error = get_fake_error()
-		fake_error_y = random.randint(0, max(0, height - len(fake_error)))
+		fake_error_y = random.randint(0, max(0, state.height - len(fake_error)))
 		fake_error_x = random.randint(
-                    0, max(0, width - max(len(line)
+                    0, max(0, state.width - max(len(line)
                                           for line in fake_error))
                 )
 		fake_error_frames_remaining = random.randint(5, 50)
 
 	if fake_error_frames_remaining > 0:
 		if random.random() < 0.1:
-			fake_error_x = max(0, min(width - 1, fake_error_x + random.randint(-1, 1)))
-			fake_error_y = max(0, min(height - 1, fake_error_y + random.randint(-1, 1)))
-		if is_blinking_on:
-			draw_into_frame(frame, fake_error, fake_error_x, fake_error_y)
+			fake_error_x = max(0, min(state.width - 1, fake_error_x + random.randint(-1, 1)))
+			fake_error_y = max(0, min(state.height - 1, fake_error_y + random.randint(-1, 1)))
+		if state.is_blinking:
+			draw_into_frame(state.frame, fake_error, fake_error_x, fake_error_y)
 		fake_error_frames_remaining -= 1

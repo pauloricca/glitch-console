@@ -1,23 +1,24 @@
 from dataclasses import dataclass
 import math
 import random
-from glitch_console_types import Config
+from glitch_console_types import Config, State
 from utils import draw_into_frame, get_random_char, get_random_lower_case_char
 
 X_SCALE = 1
 Y_SCALE = 0.3
 FULL_RADIUS = 20
-VERTEX_DIAMETER = 1.5
+VERTEX_DIAMETER = 2
 DO_DRAW_SQUARE_VERTICES = False
-PROB_NEW_VERTEX = 0.05
-VERTEX_LIFE_TIME = 5
-VERTEX_BLINKING_TIME = 2
-PERCENTAGE_OF_EDGES = 0.5
+PROB_NEW_VERTEX = 0.02
+VERTEX_LIFE_TIME = 8
+VERTEX_BLINKING_TIME = 3
+PERCENTAGE_OF_EDGES = 0.3
+PERCENTAGE_OF_CHARS_IN_VERTEX = 0.3
 MIN_NUMBER_OF_EDGES = 2
 FOV = 256
 VIEWER_DISTANCE = 100
 EDGE_CHAR = "."
-LABEL_DISTANCE = 10
+LABEL_DISTANCE = 6
 LABEL_LENGTH = 5
 
 
@@ -41,8 +42,9 @@ is_drawing_connections = False
 
 
 
-def rotate_point_3d(p: tuple[float, float, float], angle_x, angle_y, angle_z):
+def rotate_point_3d(p: tuple[float, float, float], angle: tuple[float, float, float]):
     x, y, z = p
+    angle_x, angle_y, angle_z = angle
 
     # Rotate around x-axis
     cos_x, sin_x = math.cos(angle_x), math.sin(angle_x)
@@ -69,7 +71,7 @@ def project_point_3d(p: tuple[float, float, float], width, height, fov, viewer_d
 
 
 def draw_line(frame, p1: tuple[int, int], p2: tuple[int, int], config: Config):
-    global EDGE_CHAR
+    global EDGE_CHAR, PERCENTAGE_OF_CHARS_IN_VERTEX
     x1, y1 = p1
     x2, y2 = p2
 
@@ -102,24 +104,17 @@ def draw_vertex(frame, p: tuple[int, int], label, config: Config):
                 if 0 <= y + i < len(frame) and 0 <= x + j < len(frame[0]):
                     frame[y + i] = (
                         frame[y + i][: x + j]
-                        + (get_random_char() if random.random() < config.connections_prob else " ")
+                        + (get_random_char() if random.random() < config.connections_prob * PERCENTAGE_OF_CHARS_IN_VERTEX else " ")
                         + frame[y + i][x + j + 1 :]
                     )
     
-    label_x = x - len(label) - LABEL_DISTANCE if x < len(frame[0]) / 2 else x + LABEL_DISTANCE
-    label_y = y - 1
-    label_with_border = [
-        "─" * (LABEL_LENGTH + 4),
-        "│ " + label + " │",
-        "─" * (LABEL_LENGTH + 4),
-    ]
-    draw_into_frame(frame, label_with_border, label_x, label_y)
+    label_with_border = f"[ {label}: {round(x / y, 4)} ]"
+    label_x = x - len(label_with_border) - LABEL_DISTANCE if x < len(frame[0]) / 2 else x + LABEL_DISTANCE
+    draw_into_frame(frame, label_with_border, label_x, y)
 
 
 
-def print_connections(
-    frame, elapsed_time, config: Config, is_blinking_on: bool
-):
+def print_connections(state: State, config: Config):
     global is_drawing_connections, vertices, edges, X_SCALE, Y_SCALE, PROB_NEW_VERTEX, VERTEX_LIFE_TIME, VERTEX_BLINKING_TIME, PERCENTAGE_OF_EDGES, MIN_NUMBER_OF_EDGES, FULL_RADIUS, FOV, VIEWER_DISTANCE, LABEL_LENGTH
 
     if config.connections_turning_on_prob == 0:
@@ -134,18 +129,12 @@ def print_connections(
     if not is_drawing_connections:
         return
 
-    width = len(frame[0])
-    height = len(frame)
-    angle_x = elapsed_time * 0.5
-    angle_y = elapsed_time * 0.3
-    angle_z = elapsed_time * 0.2
-
     # Add new vertices and edges
     if random.random() < PROB_NEW_VERTEX:
         new_vertex = Vertex(
             position=(random.randint(-FULL_RADIUS, FULL_RADIUS), random.randint(-FULL_RADIUS, FULL_RADIUS), random.randint(-FULL_RADIUS, FULL_RADIUS)),
             label="".join([get_random_lower_case_char() for _ in range(LABEL_LENGTH)]),
-            birth_time=elapsed_time,
+            birth_time=state.time_since_start,
         )
         vertices.append(new_vertex)
 
@@ -154,25 +143,25 @@ def print_connections(
                 new_edge = Edge(
                     start=vertex,
                     end=new_vertex,
-                    birth_time=elapsed_time,
+                    birth_time=state.time_since_start,
                 )
                 edges.append(new_edge)
 
     for vertex in vertices:
-        if elapsed_time - vertex.birth_time > VERTEX_LIFE_TIME:
+        if state.time_since_start - vertex.birth_time > VERTEX_LIFE_TIME:
             vertices.remove(vertex)
             edges = [edge for edge in edges if edge.start != vertex and edge.end != vertex]
             continue
 
-        rotated_vertex = rotate_point_3d(vertex.position, angle_x, angle_y, angle_z)
+        rotated_vertex = rotate_point_3d(vertex.position, state.global_rotation)
         scaled_vertex = (rotated_vertex[0] * X_SCALE, rotated_vertex[1] * Y_SCALE, rotated_vertex[2] * X_SCALE)
         vertex.position_projected = project_point_3d(
-            scaled_vertex, width, height, fov=FOV, viewer_distance=VIEWER_DISTANCE
+            scaled_vertex, state.width, state.height, fov=FOV, viewer_distance=VIEWER_DISTANCE
         )
 
-        if elapsed_time - vertex.birth_time > VERTEX_BLINKING_TIME or is_blinking_on:
-            draw_vertex(frame, vertex.position_projected, vertex.label, config)
+        if state.time_since_start - vertex.birth_time > VERTEX_BLINKING_TIME or state.is_blinking:
+            draw_vertex(state.frame, vertex.position_projected, vertex.label, config)
 
     for edge in edges:
-        draw_line(frame, edge.start.position_projected, edge.end.position_projected, config)
+        draw_line(state.frame, edge.start.position_projected, edge.end.position_projected, config)
 

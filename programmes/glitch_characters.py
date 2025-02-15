@@ -1,6 +1,6 @@
 import random
 import time
-from glitch_console_types import Config
+from glitch_console_types import Config, State
 from utils import draw_into_frame, get_random_char, mutate
 
 
@@ -155,29 +155,26 @@ def add_glitch(glitch, glitch_type, width, height, config: Config):
         (glitch, (new_x, new_y), time.time_ns(), glitch_type))
 
 
-def print_glitch_characters(frame, config: Config, is_blinking_on: bool):
+def print_glitch_characters(state: State, config: Config):
     global glitch_characters, has_finished_typing_last_glitch, TERMINAL_PROMPT
-
-    width = len(frame[0])
-    height = len(frame)
 
     # Add new glitch characters
     if not config.glitch_chars_print_at_bottom or has_finished_typing_last_glitch:
         if random.random() < config.glitch_chars_line_prob:
-            add_glitch(get_random_char() * random.randint(20, 80), "line", width, height, config)
+            add_glitch(get_random_char() * random.randint(20, 80), "line", state.width, state.height, config)
 
         if random.random() < config.glitch_chars_counter_prob:
-            add_glitch(random.randint(0, 8000000), "counter", width, height, config)
+            add_glitch(random.randint(0, 8000000), "counter", state.width, state.height, config)
 
         if random.random() < config.glitch_chars_command_prob:
-            add_glitch(get_fake_command(), "command", width, height, config)
+            add_glitch(get_fake_command(), "command", state.width, state.height, config)
 
         if random.random() < config.glitch_chars_question_prob:
-            add_glitch(get_question(), "command", width, height, config)
+            add_glitch(get_question(), "command", state.width, state.height, config)
 
         if random.random() < config.glitch_chars_char_prob:
             add_glitch("".join(get_random_char() for _ in range(
-                random.randint(1, 5))), "character", width, height, config)
+                random.randint(1, 5))), "character", state.width, state.height, config)
 
     # Remove old glitch characters
     glitch_characters[:] = [
@@ -189,8 +186,8 @@ def print_glitch_characters(frame, config: Config, is_blinking_on: bool):
             glitch, (x, y), birth_time, glitch_type = glitch_characters[i]
             shift_x = random.randint(-1, 1) if random.random() < 0.1 else 0
             shift_y = random.randint(-1, 1) if random.random() < 0.1 else 0
-            new_x = max(0, min(width - 1, x + shift_x))
-            new_y = max(0, min(height - 1, y + shift_y))
+            new_x = max(0, min(state.width - 1, x + shift_x))
+            new_y = max(0, min(state.height - 1, y + shift_y))
             glitch_characters[i] = (glitch, (new_x, new_y), birth_time, glitch_type)
 
     # Randomly swap one of the characters for a random one in glitch_characters
@@ -204,9 +201,9 @@ def print_glitch_characters(frame, config: Config, is_blinking_on: bool):
             glitch_characters[i] = (glitch, (x, y), birth_time, glitch_type)
 
     # Make sure to always show a prompt at the bottom
-    if config.glitch_chars_print_at_bottom and not any(gc[1] == (0, height - 1) for gc in glitch_characters):
-        prompt = TERMINAL_PROMPT + ("█" if is_blinking_on else "")
-        draw_into_frame(frame, prompt, 0, height - 1)
+    if config.glitch_chars_print_at_bottom and not any(gc[1] == (0, state.height - 1) for gc in glitch_characters):
+        prompt = TERMINAL_PROMPT + ("█" if state.is_blinking else "")
+        draw_into_frame(state.frame, prompt, 0, state.height - 1)
 
     # Print glitch characters
     for glitch, (x, y), birth_time, glitch_type in glitch_characters:
@@ -227,16 +224,16 @@ def print_glitch_characters(frame, config: Config, is_blinking_on: bool):
             if x == 0:
                     glitch_str = TERMINAL_PROMPT + glitch_str
 
-            if is_blinking_on and (not config.glitch_chars_print_at_bottom or y == height - 1):
+            if state.is_blinking and (not config.glitch_chars_print_at_bottom or y == state.height - 1):
                 glitch_str += "█"
 
             if (
-                config.using_colour
+                state.using_colour
                 or random.random() < config.colour_probability
             ):
                 glitch_str = f"\033[1;31m{glitch_str}\033[0m"
 
             # Ensure the glitch string does not overflow the line length
-            max_length = width - x
+            max_length = state.width - x
             glitch_str = glitch_str[:max_length]
-            draw_into_frame(frame, glitch_str, x, y)
+            draw_into_frame(state.frame, glitch_str, x, y)

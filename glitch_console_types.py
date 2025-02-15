@@ -14,14 +14,16 @@ class State:
     width: int
     height: int
     is_blinking: bool = False
+    using_colour: bool = False
     global_rotation: tuple[float, float, float] = (0, 0, 0)
+    global_rotation_is_rotating_fast: bool = False
+    global_rotation_time_since_last_speed_change: float = 0
 
 
 @dataclass
 class Config:
     transition_time: float = 1 # time in seconds it takes to transition to this config
     duration: float = 0 # time in seconds to stay in this config
-    using_colour: bool = False
     colour_probability: float = 0
     colours_turning_off_prob: float = 0
     colours_turning_on_prob: float = 0
@@ -60,7 +62,10 @@ class Config:
     water_period: float = 0
     water_amplitude: float = 0
     water_speed: float = 0
-    global_rotation_speed: tuple[float, float, float] = (0.1, 0.1, 0.1)
+    global_rotation_speed = (0.05, 0.2, 0.05)
+    global_rotation_speed_slow_time = 1.5
+    global_rotation_speed_fast_time = 0.5
+    global_rotation_speed_fast_ratio = 30
 
 
 

@@ -1,6 +1,6 @@
 from copy import copy
 import random
-from glitch_console_types import Config
+from glitch_console_types import Config, State
 from log import log
 from utils import get_random_char
 from dataclasses import dataclass
@@ -89,11 +89,8 @@ tetris_pieces: list[TetrisPiece] = []
 is_movingbackwards = False
 
 
-def print_tetris(frame, config: Config):
+def print_tetris(state: State, config: Config):
     global tetris_pieces, FRAMES_PER_MOVEMENT, FALLING_SPEED, FALLING_SPEED_BACKWARDS, PROBABILITY_TO_FOLLOW_DIRECTION_BIAS, PROBABILITY_OF_ROTATION, is_movingbackwards, pieces4x4
-
-    width = len(frame[0])
-    height = len(frame)
 
     if config.tetris_depth_movement == 0:
         is_movingbackwards = False
@@ -129,34 +126,31 @@ def print_tetris(frame, config: Config):
         tetris_piece.position = (x, y, z)
 
     # Remove pieces that have reached the bottom of the screen
-    tetris_pieces[:] = [fp for fp in tetris_pieces if fp.position[1] < height]
+    tetris_pieces[:] = [fp for fp in tetris_pieces if fp.position[1] < state.height]
 
     # Occasionally add a new piece
     if not is_movingbackwards:
         for _ in range(max(int(config.tetris_new_prob), 1)):
             if random.random() < config.tetris_new_prob:
-                try:
-                    tetris_pieces.append(
-                        TetrisPiece(
-                            piece=random.randint(0, len(pieces4x4) - 1),
-                            position=(
-                                random.randint(0, width - 1),
-                                random.randint(0, height - 1),
-                                random.randint(-int(config.tetris_max_depth), int(config.tetris_max_depth)) if config.tetris_max_depth > 1 else 0),
-                            scale=random.choice(config.tetris_scale_prob_weights),
-                            direction_bias=random.choice([-1, 1]),
-                            character=get_random_char()
-                        )
+                tetris_pieces.append(
+                    TetrisPiece(
+                        piece=random.randint(0, len(pieces4x4) - 1),
+                        position=(
+                            random.randint(0, state.width - 1),
+                            random.randint(0, state.height - 1),
+                            random.randint(-int(config.tetris_max_depth), int(config.tetris_max_depth)) if config.tetris_max_depth > 1 else 0),
+                        scale=random.choice(config.tetris_scale_prob_weights),
+                        direction_bias=random.choice([-1, 1]),
+                        character=get_random_char()
                     )
-                except Exception as e:
-                    import pdb; pdb.set_trace()
+                )
                 tetris_pieces.sort(key=lambda piece: -piece.position[2])
 
 
     # Draw pieces on the frame
     for tetris_piece in tetris_pieces:
-        if 0 <= tetris_piece.position[1] < height and 0 <= tetris_piece.position[0] < width:
-            draw_piece(frame, tetris_piece, config.using_colour, width, height, config)
+        if 0 <= tetris_piece.position[1] < state.height and 0 <= tetris_piece.position[0] < state.width:
+            draw_piece(state.frame, tetris_piece, state.using_colour, state.width, state.height, config)
 
 
 

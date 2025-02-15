@@ -1,17 +1,14 @@
 import time
-from glitch_console_types import Config
+from glitch_console_types import Config, State
 import math
 
 X_Y_PERIOD_RATIO = 0.01
 
-def print_water(frame: list[str], config: Config):
+def print_water(state: State, config: Config):
     global X_Y_PERIOD_RATIO
 
     if config.water_amplitude == 0 or config.water_period == 0:
-        return frame
-
-    width = len(frame[0])
-    height = len(frame)
+        return
 
     t = time.time()
     # offsets_x = [
@@ -20,15 +17,13 @@ def print_water(frame: list[str], config: Config):
     #     ]
     offsets_y = [
             int(config.water_amplitude * math.sin((y + config.water_speed * t) / config.water_period))
-            for y in range(max(height, width))
+            for y in range(max(state.height, state.width))
         ]
-
-    new_frame = [
-        "".join(
-            frame[y][(x + offsets_y[x]) % width]
-            for x in range(width)
-        )
-        for y in range(height)
-    ]
     
-    return new_frame
+    state.frame = [
+        "".join(
+            state.frame[y][(x + offsets_y[x]) % state.width]
+            for x in range(state.width)
+        )
+        for y in range(state.height)
+    ]

@@ -12,6 +12,8 @@ def get_random_char():
 def get_random_lower_case_char():
     return chr(random.randint(97, 122))
 
+def get_empty_frame(width, height):
+    return [" " * width for _ in range(height)]
 
 # Mutate error message characters
 def mutate(string_or_string_list, probability):

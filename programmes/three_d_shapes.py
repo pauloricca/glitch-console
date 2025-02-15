@@ -1,7 +1,7 @@
 import math
 import random
 
-from glitch_console_types import Config
+from glitch_console_types import Config, State
 from utils import get_random_char
 
 X_SCALE = 0.5
@@ -31,14 +31,14 @@ def project_point_3d(x, y, z, width, height, fov, viewer_distance):
     return int(x), int(y)
 
 
-def draw_shape(frame, vertices, edges, width, height, angle_x, angle_y, angle_z, config: Config):
+def draw_shape(state: State, config: Config, vertices, edges):
     global X_SCALE, Y_SCALE
     projected_vertices = []
     for vertex in vertices:
-        rotated_vertex = rotate_point_3d(*vertex, angle_x, angle_y, angle_z)
+        rotated_vertex = rotate_point_3d(*vertex, *state.global_rotation)
         scaled_vertex = (rotated_vertex[0] * X_SCALE, rotated_vertex[1] * Y_SCALE, rotated_vertex[2] * X_SCALE)  # Scale down the shape
         projected_vertex = project_point_3d(
-            *scaled_vertex, width, height, fov=256, viewer_distance=4
+            *scaled_vertex, state.width, state.height, fov=256, viewer_distance=4
         )
         projected_vertices.append(projected_vertex)
 
@@ -46,7 +46,7 @@ def draw_shape(frame, vertices, edges, width, height, angle_x, angle_y, angle_z,
         start, end = edge
         x1, y1 = projected_vertices[start]
         x2, y2 = projected_vertices[end]
-        draw_line(frame, x1, y1, x2, y2, config)
+        draw_line(state.frame, x1, y1, x2, y2, config)
 
 
 def draw_line(frame, x1, y1, x2, y2, config: Config):
@@ -72,9 +72,7 @@ current_shape = 0
 is_drawing_3d_shapes = False
 
 
-def print_3d_shapes(
-    frame, elapsed_time, config: Config
-):
+def print_3d_shapes(state: State, config: Config):
     global current_shape, is_drawing_3d_shapes
 
     if config.three_d_shapes_turning_on_prob == 0:
@@ -88,12 +86,6 @@ def print_3d_shapes(
 
     if not is_drawing_3d_shapes:
         return
-
-    width = len(frame[0])
-    height = len(frame)
-    angle_x = elapsed_time * 0.5
-    angle_y = elapsed_time * 0.3
-    angle_z = elapsed_time * 0.2
 
     # Define vertices and edges for a cube
     cube_vertices = [
@@ -293,4 +285,4 @@ def print_3d_shapes(
         current_shape = random.randint(0, len(shapes) - 1)
 
     vertices, edges = shapes[current_shape]
-    draw_shape(frame, vertices, edges, width, height, angle_x, angle_y, angle_z, config)
+    draw_shape(state, config, vertices, edges)
