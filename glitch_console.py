@@ -1,9 +1,10 @@
 from copy import copy
+from dataclasses import dataclass
 import os
 import random
 import time
 
-from glitch_console_types import Config
+from glitch_console_types import Config, State
 from log import log
 
 from programmes.fake_error import print_fake_error
@@ -21,6 +22,7 @@ FPS = 30
 DO_CLEAR_CONSOLE = False
 DO_WRITE_OVER_PREVIOUS_FRAME = False
 DO_PRINT_WITHOUT_NEW_LINES = True
+
 
 stages: list[Config] = [
     Config(
@@ -173,7 +175,7 @@ last_transition_time = time.time()
 has_finished_transition = False
 is_blinking_on = False
 number_of_lines_in_last_frame = 0
-
+state: State = None
 
 def main():
     global current_config, is_blinking_on, number_of_lines_in_last_frame, current_config_index, previous_config, last_transition_time, has_finished_transition, FPS, DO_CLEAR_CONSOLE, DO_WRITE_OVER_PREVIOUS_FRAME
@@ -182,6 +184,15 @@ def main():
 
     while True:
         current_time = time.time()
+
+        state = State(
+            frame=[" " * os.get_terminal_size().columns for _ in range(os.get_terminal_size().lines)],
+            time_since_start=current_time - start_time,
+            time_since_last_frame=current_time - state.time_since_start if state else 0,
+            width=os.get_terminal_size().columns,
+            height=os.get_terminal_size().lines,
+            is_blinking=state.is_blinking if state else False,
+        )
 
         if current_time - last_transition_time >= current_config.duration:
             previous_config = stages[current_config_index]
@@ -220,7 +231,7 @@ def main():
 
         print_noisy_characters(frame, elapsed_time, current_config)
         print_3d_shapes(frame, elapsed_time, current_config)
-        print_connections(frame, elapsed_time, current_config)
+        print_connections(frame, elapsed_time, current_config, is_blinking_on)
         print_tetris(frame, current_config)
         print_falling_characters(frame, current_config)
         print_glitch_characters(frame, current_config, is_blinking_on)

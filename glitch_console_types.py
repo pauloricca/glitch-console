@@ -5,6 +5,18 @@ from typing import List
 def default_puzzle_piece_scale_probability_weights() -> List[float]:
     return [1]
 
+
+@dataclass
+class State:
+    frame: list[str]
+    time_since_start: float
+    time_since_last_frame: float
+    width: int
+    height: int
+    is_blinking: bool = False
+    global_rotation: tuple[float, float, float] = (0, 0, 0)
+
+
 @dataclass
 class Config:
     transition_time: float = 1 # time in seconds it takes to transition to this config
@@ -48,6 +60,7 @@ class Config:
     water_period: float = 0
     water_amplitude: float = 0
     water_speed: float = 0
+    global_rotation_speed: tuple[float, float, float] = (0.1, 0.1, 0.1)
 
 
 

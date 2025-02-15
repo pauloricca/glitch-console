@@ -9,6 +9,9 @@ def get_terminal_size():
 def get_random_char():
     return chr(random.randint(33, 126))
 
+def get_random_lower_case_char():
+    return chr(random.randint(97, 122))
+
 
 # Mutate error message characters
 def mutate(string_or_string_list, probability):
