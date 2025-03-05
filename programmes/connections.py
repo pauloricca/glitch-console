@@ -11,7 +11,7 @@ VERTEX_DIAMETER = 2
 DO_DRAW_SQUARE_VERTICES = False
 PROB_NEW_VERTEX = 0.02
 VERTEX_LIFE_TIME = 8
-VERTEX_BLINKING_TIME = 3
+VERTEX_BLINKING_TIME = 2
 PERCENTAGE_OF_EDGES = 0.3
 PERCENTAGE_OF_CHARS_IN_VERTEX = 0.3
 MIN_NUMBER_OF_EDGES = 2
@@ -159,7 +159,8 @@ def print_connections(state: State, config: Config):
             scaled_vertex, state.width, state.height, fov=FOV, viewer_distance=VIEWER_DISTANCE
         )
 
-        if state.time_since_start - vertex.birth_time > VERTEX_BLINKING_TIME or state.is_blinking:
+        if (state.time_since_start - vertex.birth_time > VERTEX_BLINKING_TIME
+            and state.time_since_start - vertex.birth_time < VERTEX_LIFE_TIME - VERTEX_BLINKING_TIME) or state.is_blinking:
             draw_vertex(state.frame, vertex.position_projected, vertex.label, config)
 
     for edge in edges:

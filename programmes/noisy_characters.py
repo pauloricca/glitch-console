@@ -11,7 +11,7 @@ def print_noisy_characters(state: State, config: Config):
 
 	empty_percentage = (
 		(math.sin(2 * math.pi * state.time_since_start / config.noisy_chars_period) ** 2 + 1) / 2
-	) ** 0.01
+	) ** 1.7
 
 	center_x, center_y = state.width // 2, state.height // 2
 

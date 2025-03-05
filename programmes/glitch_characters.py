@@ -147,7 +147,7 @@ def add_glitch(glitch, glitch_type, width, height, config: Config):
         glitch_characters = [(glitch, (new_x, new_y - 1), birth_time, glitch_type)
                              for glitch, (new_x, new_y), birth_time, glitch_type in glitch_characters]
     else:
-        new_x = random.randint(0, width - len(glitch)
+        new_x = random.randint(0, max(1, width - len(glitch))
                                if glitch_type != "counter" else 10)
         new_y = random.randint(0, height - 1)
 

@@ -59,13 +59,23 @@ class Config:
     waves_period: float = 0
     waves_amplitude: float = 0
     waves_speed: float = 0
+    waves_is_warp_mode: bool = False
     water_period: float = 0
     water_amplitude: float = 0
     water_speed: float = 0
-    global_rotation_speed = (0.05, 0.2, 0.05)
-    global_rotation_speed_slow_time = 1.5
-    global_rotation_speed_fast_time = 0.5
-    global_rotation_speed_fast_ratio = 30
+    global_rotation_speed: tuple[float, float, float] = (0.05, 0.2, 0.05)
+    global_rotation_speed_slow_time: float = 1.5
+    global_rotation_speed_fast_time: float = 0.5
+    global_rotation_speed_fast_ratio: float = 30
+    tv_glitch_amplitude: float = 0 # 100
+    tv_glitch_speed: float = 0 # 30
+    tv_glitch_period: float = 0 # 100
+    tv_glitch_is_dual_axis: bool = True
+    tv_glitch_is_swap_axis: bool = True
+    scan_prob: float = 0
+    scan_thickness: float = 0
+    scan_speed: float = 0
+    game_of_life_prob: float = 0
 
 
 
