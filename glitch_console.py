@@ -20,9 +20,10 @@ from programmes.three_d_shapes import print_3d_shapes
 from programmes.tv_glitch import print_tv_glitch
 from programmes.water import print_water
 from programmes.waves import print_waves
+from programmes.strobe import print_strobe
 from utils import draw_into_frame, get_empty_frame
 
-START_STAGE = 4
+START_STAGE = 6
 FPS = 25
 MIN_SLEEP_TIME = 0.01
 DO_CLEAR_CONSOLE = False
@@ -71,6 +72,9 @@ stages: list[Config] = [
         transition_time=10,
         duration=200,
         game_of_life_prob=1.0,
+        waves_period=15,
+        waves_amplitude=10,
+        waves_speed=4,
     ),
     Config(
         transition_time=10,
@@ -327,8 +331,8 @@ def main():
 
         print_waves(state, current_config)
         print_water(state, current_config)
-        # print_tv_glitch(state, current_config)
         print_tv_glitch(state, current_config)
+        print_strobe(state, current_config)
 
         # Clear the console
         if DO_CLEAR_CONSOLE:
@@ -343,6 +347,8 @@ def main():
         if DO_PRINT_STATS:
             draw_into_frame(state.frame, f"Render time: {100 * render_time_percentage:.2f}%", 0, 0)
             draw_into_frame(state.frame, f"Time since start: {state.time_since_start:.1f}s", 0, 1)
+            draw_into_frame(state.frame, f"Time since last transition: {(time.time() - last_transition_time):.1f}s", 0, 2)
+            draw_into_frame(state.frame, f"Current stage index: {current_config_index}", 0, 3)
 
         # Render
         if DO_PRINT_WITHOUT_NEW_LINES:

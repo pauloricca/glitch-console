@@ -108,7 +108,7 @@ def draw_vertex(frame, p: tuple[int, int], label, config: Config):
                         + frame[y + i][x + j + 1 :]
                     )
     
-    label_with_border = f"[ {label}: {round(x / y, 4)} ]"
+    label_with_border = f"[ {label}: {round(x / y, 4) if y != 0 else 0} ]"
     label_x = x - len(label_with_border) - LABEL_DISTANCE if x < len(frame[0]) / 2 else x + LABEL_DISTANCE
     draw_into_frame(frame, label_with_border, label_x, y)
 

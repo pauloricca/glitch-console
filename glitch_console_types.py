@@ -76,6 +76,7 @@ class Config:
     scan_thickness: float = 0
     scan_speed: float = 0
     game_of_life_prob: float = 0
+    strobe_prob: float = 0
 
 
 
